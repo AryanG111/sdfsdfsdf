@@ -65,6 +65,26 @@ def get_summary(month: str = Query("2026-01", description="Month in YYYY-MM form
         last_refresh = datetime.fromtimestamp(mtime, tz=timezone.utc).isoformat()
 
     return SummaryResponse(
+        period={
+            "start": settings.EVALUATION_START,
+            "end": settings.EVALUATION_END,
+        },
+        metrics={
+            "mae": metrics["mae"],
+            "rmse": metrics["rmse"],
+            "bias": metrics["bias"],
+            "matched_periods": matched_count,
+        },
+        coverage={
+            "expected_actual_periods": expected_periods,
+            "actual_periods": observed_actuals,
+            "forecast_periods": matched_count,
+            "missing_forecast_periods": missing_forecasts,
+        },
+        methodology={
+            "cutoff_hours": settings.DECISION_CUTOFF_HOURS,
+            "timezone": "UTC",
+        },
         month=month,
         startDate=settings.EVALUATION_START,
         endDate=settings.EVALUATION_END,
@@ -102,6 +122,9 @@ def get_timeseries(
             detail=f"No delivery data found for date {date}. Available range: 2026-01-01 to 2026-01-31.",
         )
 
+    # Compute daily metrics in backend
+    daily_stats = calculate_accuracy_metrics(df_day)
+
     points = []
     matched_count = 0
     for _, row in df_day.iterrows():
@@ -123,14 +146,23 @@ def get_timeseries(
             forecastGeneration=fc,
             publishTime=pub_time,
             decisionCutoff=cutoff,
+            error=err,
             errorMw=err,
         ))
 
     return TimeSeriesResponse(
         date=date,
+        expected_periods=len(points),
+        matched_periods=matched_count,
         periodsCount=len(points),
         matchedCount=matched_count,
         unit="MW",
+        metrics={
+            "mae": daily_stats["mae"],
+            "rmse": daily_stats["rmse"],
+            "bias": daily_stats["bias"],
+        },
+        observations=points,
         points=points,
     )
 
@@ -206,6 +238,11 @@ def get_forecast_history(
             isEligible=h["isEligible"],
             isSelected=h["isSelected"],
             status=h["status"],
+            publication_timestamp=h["publishTime"],
+            forecast_generation=h["generation"],
+            decision_cutoff=h["decisionCutoff"],
+            is_eligible=h["isEligible"],
+            is_selected=h["isSelected"],
         )
         for h in history
     ]
@@ -218,6 +255,9 @@ def get_forecast_history(
         totalVersions=len(version_models),
         selectedVersion=selected,
         versions=version_models,
+        delivery_timestamp=del_ts.isoformat(),
+        delivery_time=del_ts.isoformat(),
+        decision_cutoff=cutoff_ts.isoformat(),
     )
 
 
@@ -240,6 +280,14 @@ def get_data_quality(
     max_fc = float(df_merged["forecast_generation"].max()) if not df_merged["forecast_generation"].dropna().empty else None
 
     return DataQualityResponse(
+        expected_actual_periods=expected,
+        observed_actual_periods=observed_act,
+        available_forecast_observations=matched,
+        valid_matched_observations=matched,
+        missing_actual_values=missing_act,
+        missing_forecast_values=missing_fc,
+        duplicate_records=0,
+        invalid_records=0,
         month=month,
         timezone="UTC",
         decisionRule=f"24-hour day-ahead cutoff (publishTime <= startTime - {settings.DECISION_CUTOFF_HOURS}h)",
@@ -263,3 +311,4 @@ def get_data_quality(
             "The remaining 744 half-hourly periods (:30) have no forecast published by Elexon and are kept as null (not fabricated)."
         ),
     )
+

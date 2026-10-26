@@ -29,10 +29,18 @@ export interface TimeSeriesPoint {
 
 export interface TimeSeriesData {
   date: string;
+  expected_periods?: number;
+  matched_periods?: number;
   periodsCount: number;
   matchedCount: number;
   unit: string;
+  metrics?: {
+    mae: number | null;
+    rmse: number | null;
+    bias: number | null;
+  };
   points: TimeSeriesPoint[];
+  observations?: TimeSeriesPoint[];
 }
 
 export interface DailyAccuracyMetric {

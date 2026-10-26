@@ -40,22 +40,28 @@ export const Dashboard: React.FC = () => {
   const [isLoadingQuality, setIsLoadingQuality] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // 1. Initial summary load
+  // 1. Initial summary & data-quality load
   useEffect(() => {
-    async function fetchSummary() {
+    async function fetchInitialData() {
       try {
         setErrorMessage(null);
         setIsLoadingSummary(true);
-        const sumData = await api.getSummary('2026-01');
+        setIsLoadingQuality(true);
+        const [sumData, qData] = await Promise.all([
+          api.getSummary('2026-01'),
+          api.getDataQuality('2026-01'),
+        ]);
         setSummary(sumData);
+        setQuality(qData);
       } catch (err: any) {
-        console.error('Failed to load summary:', err);
+        console.error('Failed to load initial data:', err);
         setErrorMessage(`Unable to connect to backend: ${err.message}`);
       } finally {
         setIsLoadingSummary(false);
+        setIsLoadingQuality(false);
       }
     }
-    fetchSummary();
+    fetchInitialData();
   }, []);
 
   // 2. Fetch timeseries whenever selectedDate changes
@@ -108,40 +114,17 @@ export const Dashboard: React.FC = () => {
     }
   }, [secondaryTab, accuracy]);
 
-  // 5. Fetch data quality if secondary tab is 'coverage'
-  useEffect(() => {
-    if (secondaryTab === 'coverage' && !quality) {
-      async function fetchQuality() {
-        try {
-          setIsLoadingQuality(true);
-          const qData = await api.getDataQuality('2026-01');
-          setQuality(qData);
-        } catch (err: any) {
-          console.error('Failed to load quality:', err);
-        } finally {
-          setIsLoadingQuality(false);
-        }
-      }
-      fetchQuality();
-    }
-  }, [secondaryTab, quality]);
-
   // Available hourly timestamps for the day
   const availableHours = (timeSeries?.points || [])
     .filter((pt) => pt.forecastGeneration !== null)
     .map((pt) => pt.startTime);
 
-  // Compute daily metrics for selected date
-  const dayMatched = (timeSeries?.points || []).filter((p) => p.errorMw !== null);
-  const dayMae = dayMatched.length > 0
-    ? Math.round((dayMatched.reduce((acc, p) => acc + Math.abs(p.errorMw!), 0) / dayMatched.length) * 10) / 10
-    : null;
-  const dayRmse = dayMatched.length > 0
-    ? Math.round(Math.sqrt(dayMatched.reduce((acc, p) => acc + (p.errorMw! ** 2), 0) / dayMatched.length) * 10) / 10
-    : null;
-  const dayBias = dayMatched.length > 0
-    ? Math.round((dayMatched.reduce((acc, p) => acc + p.errorMw!, 0) / dayMatched.length) * 10) / 10
-    : null;
+  // Daily metrics sourced strictly from Python backend API (/api/timeseries)
+  const dailyMae = timeSeries?.metrics?.mae ?? null;
+  const dailyRmse = timeSeries?.metrics?.rmse ?? null;
+  const dailyBias = timeSeries?.metrics?.bias ?? null;
+  const dailyMatchedCount = timeSeries?.matched_periods ?? timeSeries?.matchedCount ?? 0;
+  const dailyTotalPeriods = timeSeries?.expected_periods ?? timeSeries?.periodsCount ?? 48;
 
   const handlePeriodSelect = (startTime: string) => {
     setSelectedDeliveryTime(startTime);
@@ -150,7 +133,7 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-page)' }}>
-      {/* 1. Header */}
+      {/* 7.1 Header */}
       <AppHeader onOpenMethodology={() => setIsMethodologyOpen(true)} />
 
       {/* Main Content Area */}
@@ -180,7 +163,7 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
 
-        {/* 2. Page Heading */}
+        {/* Page Title */}
         <section style={{ marginBottom: '0.5rem' }}>
           <h1
             style={{
@@ -213,11 +196,11 @@ export const Dashboard: React.FC = () => {
           </p>
         </section>
 
-        {/* 3. Date Selection */}
+        {/* 7.2 Date Selector */}
         <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
-        {/* 4. Monthly Accuracy Summary (3 compact cards) */}
-        <section style={{ marginBottom: '1.75rem' }}>
+        {/* 7.3 Monthly KPI Section (prominent, compact metrics + secondary matched-period count) */}
+        <section style={{ marginBottom: '1.25rem' }}>
           <div
             style={{
               display: 'flex',
@@ -226,15 +209,15 @@ export const Dashboard: React.FC = () => {
             }}
           >
             <MetricCard
-              title="Mean absolute error (MAE)"
+              title="Monthly MAE"
               value={summary?.mae ?? null}
               unit="MW"
-              description="Average absolute difference between forecast and actual generation."
+              description="Average absolute error across January 2026."
               isLoading={isLoadingSummary}
             />
 
             <MetricCard
-              title="Root mean squared error (RMSE)"
+              title="Monthly RMSE"
               value={summary?.rmse ?? null}
               unit="MW"
               description="Gives greater weight to larger forecast errors."
@@ -242,7 +225,7 @@ export const Dashboard: React.FC = () => {
             />
 
             <MetricCard
-              title="Forecast bias"
+              title="Monthly forecast bias"
               value={
                 summary?.bias !== null && summary?.bias !== undefined
                   ? `${summary.bias > 0 ? '+' : ''}${summary.bias.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`
@@ -253,10 +236,45 @@ export const Dashboard: React.FC = () => {
               isLoading={isLoadingSummary}
             />
           </div>
+
+          {/* Secondary matched-period count as required by Section 7.3 */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '0.5rem',
+              padding: '0 0.25rem',
+              fontSize: '0.75rem',
+              color: 'var(--text-muted)',
+            }}
+          >
+            <div>
+              Monthly matched periods:{' '}
+              <strong style={{ color: 'var(--text-secondary)' }}>
+                {summary?.matchedPeriods ?? 744}
+              </strong>{' '}
+              of {summary?.expectedPeriods ?? 1488} half-hourly settlement periods (50.0% settlement coverage; 744 hourly forecasts)
+            </div>
+            <div>
+              Constant across delivery dates &bull; Source: <code style={{ color: 'var(--text-primary)' }}>/api/summary</code>
+            </div>
+          </div>
         </section>
 
-        {/* 5. Main Chart: Forecast vs actual generation */}
-        <section style={{ marginBottom: '1rem' }}>
+        {/* 7.4 Daily KPI Section (Daily MAE, RMSE, bias, matched periods from /api/timeseries) */}
+        <section style={{ marginBottom: '1.5rem' }}>
+          <DailyMetricsRow
+            mae={dailyMae}
+            rmse={dailyRmse}
+            bias={dailyBias}
+            matchedCount={dailyMatchedCount}
+            totalPeriods={dailyTotalPeriods}
+          />
+        </section>
+
+        {/* 7.5 Main Generation Chart: Forecast vs actual generation */}
+        <section style={{ marginBottom: '1.25rem' }}>
           <GenerationChart
             data={timeSeries?.points || []}
             selectedDate={selectedDate}
@@ -264,80 +282,83 @@ export const Dashboard: React.FC = () => {
           />
         </section>
 
-        {/* 6. Daily Metrics Summary Row */}
-        <section style={{ marginBottom: '1.5rem' }}>
-          <DailyMetricsRow
-            mae={dayMae}
-            rmse={dayRmse}
-            bias={dayBias}
-            matchedCount={dayMatched.length}
-            totalPeriods={timeSeries?.periodsCount ?? 48}
-          />
-        </section>
-
-        {/* 7. Forecast error over time */}
+        {/* 7.6 Forecast Error Chart: Error = Forecast - Actual with 0 reference line */}
         <section style={{ marginBottom: '2.5rem' }}>
           <ErrorChart data={timeSeries?.points || []} />
         </section>
 
-        {/* 8. Secondary Information Section */}
-        <section>
-          {/* Subtle segmented tab selector */}
+        {/* 7.7 Data Coverage & Audit Section */}
+        <section style={{ marginBottom: '2rem' }}>
+          {/* Section Heading & Subtabs */}
           <div
             style={{
               display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
               borderBottom: '1px solid var(--border-color)',
               marginBottom: '1.25rem',
-              gap: '0.5rem',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
             }}
           >
-            <button
-              onClick={() => setSecondaryTab('history')}
+            <div
               style={{
-                padding: '0.625rem 0.875rem',
-                fontSize: '0.8125rem',
-                fontWeight: 500,
-                backgroundColor: 'transparent',
-                color: secondaryTab === 'history' ? 'var(--text-primary)' : 'var(--text-muted)',
-                borderBottom: secondaryTab === 'history' ? '2px solid var(--text-primary)' : '2px solid transparent',
-                marginBottom: '-1px',
+                display: 'flex',
+                gap: '0.5rem',
               }}
             >
-              Forecast publication history
-            </button>
+              <button
+                onClick={() => setSecondaryTab('coverage')}
+                style={{
+                  padding: '0.625rem 0.875rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: 500,
+                  backgroundColor: 'transparent',
+                  color: secondaryTab === 'coverage' ? 'var(--text-primary)' : 'var(--text-muted)',
+                  borderBottom: secondaryTab === 'coverage' ? '2px solid var(--text-primary)' : '2px solid transparent',
+                  marginBottom: '-1px',
+                }}
+              >
+                7.7 Data coverage &amp; methodology
+              </button>
 
-            <button
-              onClick={() => setSecondaryTab('monthly')}
-              style={{
-                padding: '0.625rem 0.875rem',
-                fontSize: '0.8125rem',
-                fontWeight: 500,
-                backgroundColor: 'transparent',
-                color: secondaryTab === 'monthly' ? 'var(--text-primary)' : 'var(--text-muted)',
-                borderBottom: secondaryTab === 'monthly' ? '2px solid var(--text-primary)' : '2px solid transparent',
-                marginBottom: '-1px',
-              }}
-            >
-              Monthly accuracy breakdown
-            </button>
+              <button
+                onClick={() => setSecondaryTab('history')}
+                style={{
+                  padding: '0.625rem 0.875rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: 500,
+                  backgroundColor: 'transparent',
+                  color: secondaryTab === 'history' ? 'var(--text-primary)' : 'var(--text-muted)',
+                  borderBottom: secondaryTab === 'history' ? '2px solid var(--text-primary)' : '2px solid transparent',
+                  marginBottom: '-1px',
+                }}
+              >
+                Forecast publication history
+              </button>
 
-            <button
-              onClick={() => setSecondaryTab('coverage')}
-              style={{
-                padding: '0.625rem 0.875rem',
-                fontSize: '0.8125rem',
-                fontWeight: 500,
-                backgroundColor: 'transparent',
-                color: secondaryTab === 'coverage' ? 'var(--text-primary)' : 'var(--text-muted)',
-                borderBottom: secondaryTab === 'coverage' ? '2px solid var(--text-primary)' : '2px solid transparent',
-                marginBottom: '-1px',
-              }}
-            >
-              Data coverage &amp; methodology
-            </button>
+              <button
+                onClick={() => setSecondaryTab('monthly')}
+                style={{
+                  padding: '0.625rem 0.875rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: 500,
+                  backgroundColor: 'transparent',
+                  color: secondaryTab === 'monthly' ? 'var(--text-primary)' : 'var(--text-muted)',
+                  borderBottom: secondaryTab === 'monthly' ? '2px solid var(--text-primary)' : '2px solid transparent',
+                  marginBottom: '-1px',
+                }}
+              >
+                Monthly accuracy breakdown
+              </button>
+            </div>
           </div>
 
-          {/* Secondary Tab Content */}
+          {/* Tab Content */}
+          {secondaryTab === 'coverage' && (
+            <DataQualityPanel data={quality} isLoading={isLoadingQuality} />
+          )}
+
           {secondaryTab === 'history' && (
             <ForecastHistoryTable
               historyData={history}
@@ -357,10 +378,6 @@ export const Dashboard: React.FC = () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
             />
-          )}
-
-          {secondaryTab === 'coverage' && (
-            <DataQualityPanel data={quality} isLoading={isLoadingQuality} />
           )}
         </section>
       </main>

@@ -60,6 +60,7 @@ def health_check():
     return HealthResponse(
         status="ok",
         version="1.0.0",
+        data_loaded=is_avail,
         dataAvailable=is_avail,
         actualsCount=act_count,
         forecastsCount=fc_count,
