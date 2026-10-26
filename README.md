@@ -241,33 +241,32 @@ docker compose up --build
 
 ## 12. Deployment Instructions
 
-### Frontend Deployment (Vercel)
-1. Import the repository into Vercel and set `Root Directory` to `frontend`.
-2. Framework Preset: `Vite`.
-3. Add Environment Variable:
-   * `VITE_API_BASE_URL`: `<YOUR_DEPLOYED_BACKEND_URL>`
-4. Deploy.
+### Production VPS Deployment (Live on AWS EC2)
+The application is deployed live on an Ubuntu VPS:
+* **Live Application:** [https://13.51.157.228.sslip.io](https://13.51.157.228.sslip.io)
+* **Direct IP Fallback:** [http://13.51.157.228](http://13.51.157.228)
+* **Live Swagger Interactive Docs:** [https://13.51.157.228.sslip.io/docs](https://13.51.157.228.sslip.io/docs)
+* **API Health Check:** [https://13.51.157.228.sslip.io/health](https://13.51.157.228.sslip.io/health)
 
-### Backend Deployment (Render / Railway)
-1. Create a new Web Service pointing to the repository.
-2. Root Directory: `backend` (or repo root).
-3. Build Command: `pip install -r backend/requirements.txt`
-4. Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-5. Environment Variables:
-   * `PORT`: `8000`
-   * `DATA_DIR`: `data`
-   * `CORS_ORIGINS`: `https://<YOUR_VERCEL_FRONTEND_URL>,http://localhost:3000`
+#### VPS Architecture:
+* **Reverse Proxy & SSL:** Nginx with Let's Encrypt TLS termination, HTTP-to-HTTPS redirect, and gzip compression.
+* **Process Manager:** PM2 managing FastAPI Uvicorn ASGI backend service (`windlens-backend`) in a dedicated Python 3.12 virtual environment.
+* **Frontend:** Optimized Vite production bundle served directly by Nginx with client-side SPA routing (`try_files $uri $uri/ /index.html;`) and 1-year immutable caching for `/assets/`.
+
+### Alternative Cloud Deployments (Vercel & Render)
+* **Frontend (Vercel):** Root directory `frontend`, Framework preset `Vite`, `VITE_API_BASE_URL` pointing to backend.
+* **Backend (Render / Railway):** Root directory `backend`, start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
 
 ---
 
 ## 13. Deliverables & Demonstration
 
-* **Public Repository:** Anonymous public repository URL.
-* **Live Frontend Application:** [Deployed Vercel URL]
-* **Live API & Swagger Documentation:** [Deployed Backend URL]/docs
-* **Walkthrough Demo Video (< 10 Minutes):** [Unlisted YouTube Link]
+* **Live Frontend Application:** [https://13.51.157.228.sslip.io](https://13.51.157.228.sslip.io)
+* **Live API & Swagger Documentation:** [https://13.51.157.228.sslip.io/docs](https://13.51.157.228.sslip.io/docs)
+* **Live Health Check:** [https://13.51.157.228.sslip.io/health](https://13.51.157.228.sslip.io/health)
+* **Demonstration Coverage:**
   * Part 1: Client business problem, dashboard KPIs, outturn vs forecast, and forecast revision history.
-  * Part 2: Technical architecture, data integrity, test suite, and Docker deployment.
+  * Part 2: Technical architecture, data integrity, test suite, and Docker/VPS deployment.
 
 ---
 
