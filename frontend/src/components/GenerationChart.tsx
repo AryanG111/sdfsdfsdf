@@ -194,7 +194,7 @@ export const GenerationChart: React.FC<GenerationChartProps> = ({
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={chartData}
-            margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+            margin={{ top: 12, right: 24, left: 10, bottom: 10 }}
             onClick={(state: any) => {
               if (state && state.activePayload && state.activePayload.length && onSelectPeriod) {
                 const pt = state.activePayload[0].payload as TimeSeriesPoint;
@@ -217,7 +217,10 @@ export const GenerationChart: React.FC<GenerationChartProps> = ({
               tickLine={false}
               axisLine={{ stroke: '#E4E7EC' }}
               tickFormatter={(v) => `${(v / 1000).toFixed(0)}k MW`}
-              domain={['auto', 'auto']}
+              domain={[
+                (dataMin: number) => Math.max(0, Math.floor((dataMin - 1000) / 1000) * 1000),
+                (dataMax: number) => Math.ceil((dataMax + 1000) / 1000) * 1000,
+              ]}
               width={65}
             />
             <Tooltip content={<CustomTooltip onSelectPeriod={onSelectPeriod} />} />
@@ -235,9 +238,9 @@ export const GenerationChart: React.FC<GenerationChartProps> = ({
               dataKey="forecastGeneration"
               name="Day-ahead forecast"
               stroke="#D98B32"
-              strokeWidth={1.8}
-              strokeDasharray="4 4"
-              connectNulls={false}
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              connectNulls={true}
               dot={{ r: 3.5, fill: '#D98B32', stroke: '#FFFFFF', strokeWidth: 1.5 }}
               activeDot={{ r: 5, fill: '#D98B32', stroke: '#FFFFFF', strokeWidth: 2 }}
             />
