@@ -270,7 +270,9 @@ The application is deployed live on an Ubuntu VPS:
 
 ---
 
-## 14. AI Tools Disclosure
+## 14. Tooling & AI Assistance Disclosure
 
-In accordance with transparent academic and professional integrity standards:
-AI tools (Claude / Gemini Advanced Agentic Coding) were used to assist with implementation planning, API endpoint schema inspection, unit test construction, and documentation drafting. All data pipeline algorithms, forecast selection cutoff logic, and accuracy metric calculations were verified by the engineer against the live Elexon BMRS API and validated through automated unit test suites.
+In accordance with transparent academic and professional standards:
+* **Primary Coding Assistant:** Built using **Antigravity** as the primary coding and pair-programming tool to streamline project scaffolding, API integration, interactive dashboard development, and cloud deployment.
+* **Tooling Adaptability:** Also fully comfortable and experienced working with other modern AI-assisted development tools including **Claude Code**, **Cursor**, **Codex / GitHub Copilot**, and agentic terminal workflows.
+* **Engineering Verification:** All data pipelines, forecast selection algorithms ($T - 24\text{h}$ day-ahead rule), evaluation metrics (MAE, MSE, RMSE, bias), and system architectures were verified against the live Elexon BMRS API and rigorously validated through an automated 31-test test suite.
