@@ -23,6 +23,7 @@ def test_summary_endpoint():
     assert data["missingForecastCount"] == 744
     assert data["missingActualCount"] == 0
     assert data["mae"] is not None
+    assert data["mse"] is not None
     assert data["rmse"] is not None
     assert data["bias"] is not None
     assert data["unit"] == "MW"
@@ -34,6 +35,9 @@ def test_timeseries_endpoint():
     assert data["date"] == "2026-01-01"
     assert data["periodsCount"] == 48 # 48 half-hour settlement periods
     assert data["matchedCount"] == 24 # 24 hourly forecasts matched
+    assert data["metrics"]["mae"] is not None
+    assert data["metrics"]["mse"] is not None
+    assert data["metrics"]["rmse"] is not None
     assert len(data["points"]) == 48
 
     # First point (:00) has both actual and forecast

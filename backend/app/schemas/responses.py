@@ -15,6 +15,7 @@ class PeriodInfo(BaseModel):
 
 class MetricsSummary(BaseModel):
     mae: Optional[float]
+    mse: Optional[float] = None
     rmse: Optional[float]
     bias: Optional[float]
     matched_periods: int
@@ -48,6 +49,7 @@ class SummaryResponse(BaseModel):
     missingForecastCount: int
     missingActualCount: int
     mae: Optional[float]
+    mse: Optional[float] = None
     rmse: Optional[float]
     bias: Optional[float]
     unit: str = "MW"
@@ -66,6 +68,7 @@ class TimeSeriesPoint(BaseModel):
 
 class DailyMetrics(BaseModel):
     mae: Optional[float]
+    mse: Optional[float] = None
     rmse: Optional[float]
     bias: Optional[float]
 
@@ -83,6 +86,7 @@ class TimeSeriesResponse(BaseModel):
 class DailyAccuracyMetric(BaseModel):
     date: str
     mae: Optional[float]
+    mse: Optional[float] = None
     rmse: Optional[float]
     bias: Optional[float]
     matchedCount: int
@@ -92,6 +96,7 @@ class AccuracyResponse(BaseModel):
     startDate: str
     endDate: str
     mae: Optional[float]
+    mse: Optional[float] = None
     rmse: Optional[float]
     bias: Optional[float]
     matchedCount: int

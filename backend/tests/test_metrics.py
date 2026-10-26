@@ -26,6 +26,7 @@ def test_metrics_hand_calculated():
 
     assert metrics["matchedCount"] == 3
     assert metrics["mae"] == 13.33
+    assert metrics["mse"] == 200.0
     assert metrics["rmse"] == 14.14
     assert metrics["bias"] == 6.67
 
@@ -46,9 +47,11 @@ def test_missing_values_excluded_not_zero():
     assert metrics["totalPeriods"] == 4
     # Valid errors: +10, +20
     # MAE = (10 + 20) / 2 = 15.0
+    # MSE = (100 + 400) / 2 = 250.0
     # RMSE = sqrt((100 + 400) / 2) = sqrt(250) = 15.81
     # Bias = (+10 + 20) / 2 = 15.0
     assert metrics["mae"] == 15.0
+    assert metrics["mse"] == 250.0
     assert metrics["rmse"] == 15.81
     assert metrics["bias"] == 15.0
 
@@ -61,6 +64,7 @@ def test_empty_dataset_returns_nulls():
 
     assert metrics["matchedCount"] == 0
     assert metrics["mae"] is None
+    assert metrics["mse"] is None
     assert metrics["rmse"] is None
     assert metrics["bias"] is None
 
@@ -85,10 +89,14 @@ def test_daily_metrics_aggregation():
     assert day1["date"] == "2026-01-01"
     assert day1["matchedCount"] == 2
     assert day1["mae"] == 10.0
+    assert day1["mse"] == 100.0
+    assert day1["rmse"] == 10.0
     assert day1["bias"] == 10.0
 
     day2 = daily[1]
     assert day2["date"] == "2026-01-02"
     assert day2["matchedCount"] == 1
     assert day2["mae"] == 20.0
+    assert day2["mse"] == 400.0
+    assert day2["rmse"] == 20.0
     assert day2["bias"] == -20.0

@@ -10,6 +10,7 @@ export interface SummaryData {
   missingForecastCount: number;
   missingActualCount: number;
   mae: number | null;
+  mse?: number | null;
   rmse: number | null;
   bias: number | null;
   unit: string;
@@ -36,6 +37,7 @@ export interface TimeSeriesData {
   unit: string;
   metrics?: {
     mae: number | null;
+    mse?: number | null;
     rmse: number | null;
     bias: number | null;
   };
@@ -46,6 +48,7 @@ export interface TimeSeriesData {
 export interface DailyAccuracyMetric {
   date: string;
   mae: number | null;
+  mse?: number | null;
   rmse: number | null;
   bias: number | null;
   matchedCount: number;
@@ -56,6 +59,7 @@ export interface AccuracyData {
   startDate: string;
   endDate: string;
   mae: number | null;
+  mse?: number | null;
   rmse: number | null;
   bias: number | null;
   matchedCount: number;

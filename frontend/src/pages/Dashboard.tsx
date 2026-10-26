@@ -121,6 +121,7 @@ export const Dashboard: React.FC = () => {
 
   // Daily metrics sourced strictly from Python backend API (/api/timeseries)
   const dailyMae = timeSeries?.metrics?.mae ?? null;
+  const dailyMse = timeSeries?.metrics?.mse ?? null;
   const dailyRmse = timeSeries?.metrics?.rmse ?? null;
   const dailyBias = timeSeries?.metrics?.bias ?? null;
   const dailyMatchedCount = timeSeries?.matched_periods ?? timeSeries?.matchedCount ?? 0;
@@ -217,6 +218,18 @@ export const Dashboard: React.FC = () => {
             />
 
             <MetricCard
+              title="Monthly MSE"
+              value={
+                summary?.mse !== null && summary?.mse !== undefined
+                  ? Math.round(summary.mse)
+                  : null
+              }
+              unit="MW²"
+              description="Mean squared error penalty across January 2026."
+              isLoading={isLoadingSummary}
+            />
+
+            <MetricCard
               title="Monthly RMSE"
               value={summary?.rmse ?? null}
               unit="MW"
@@ -262,10 +275,11 @@ export const Dashboard: React.FC = () => {
           </div>
         </section>
 
-        {/* 7.4 Daily KPI Section (Daily MAE, RMSE, bias, matched periods from /api/timeseries) */}
+        {/* 7.4 Daily KPI Section (Daily MAE, MSE, RMSE, bias, matched periods from /api/timeseries) */}
         <section style={{ marginBottom: '1.5rem' }}>
           <DailyMetricsRow
             mae={dailyMae}
+            mse={dailyMse}
             rmse={dailyRmse}
             bias={dailyBias}
             matchedCount={dailyMatchedCount}

@@ -15,6 +15,7 @@ def calculate_accuracy_metrics(
     if df.empty or actual_col not in df.columns or forecast_col not in df.columns:
         return {
             "mae": None,
+            "mse": None,
             "rmse": None,
             "bias": None,
             "matchedCount": 0,
@@ -28,6 +29,7 @@ def calculate_accuracy_metrics(
     if n == 0:
         return {
             "mae": None,
+            "mse": None,
             "rmse": None,
             "bias": None,
             "matchedCount": 0,
@@ -36,11 +38,13 @@ def calculate_accuracy_metrics(
 
     errors = valid[forecast_col].astype(float) - valid[actual_col].astype(float)
     mae = float(errors.abs().mean())
-    rmse = float(math.sqrt((errors ** 2).mean()))
+    mse = float((errors ** 2).mean())
+    rmse = float(math.sqrt(mse))
     bias = float(errors.mean())
 
     return {
         "mae": round(mae, 2),
+        "mse": round(mse, 2),
         "rmse": round(rmse, 2),
         "bias": round(bias, 2),
         "matchedCount": n,
@@ -69,6 +73,7 @@ def calculate_daily_metrics(
         daily_results.append({
             "date": date_str,
             "mae": m["mae"],
+            "mse": m["mse"],
             "rmse": m["rmse"],
             "bias": m["bias"],
             "matchedCount": m["matchedCount"],

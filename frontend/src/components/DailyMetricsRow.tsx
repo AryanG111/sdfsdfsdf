@@ -2,6 +2,7 @@ import React from 'react';
 
 interface DailyMetricsRowProps {
   mae: number | null;
+  mse?: number | null;
   rmse: number | null;
   bias: number | null;
   matchedCount: number;
@@ -10,6 +11,7 @@ interface DailyMetricsRowProps {
 
 export const DailyMetricsRow: React.FC<DailyMetricsRowProps> = ({
   mae,
+  mse,
   rmse,
   bias,
   matchedCount,
@@ -34,6 +36,13 @@ export const DailyMetricsRow: React.FC<DailyMetricsRowProps> = ({
           <span style={{ color: 'var(--text-muted)' }}>Daily MAE: </span>
           <span className="num-tabular" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
             {mae !== null ? `${mae.toLocaleString()} MW` : '—'}
+          </span>
+        </div>
+
+        <div>
+          <span style={{ color: 'var(--text-muted)' }}>Daily MSE: </span>
+          <span className="num-tabular" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+            {mse !== null && mse !== undefined ? `${Math.round(mse).toLocaleString()} MW²` : '—'}
           </span>
         </div>
 

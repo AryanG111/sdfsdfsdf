@@ -71,6 +71,7 @@ def get_summary(month: str = Query("2026-01", description="Month in YYYY-MM form
         },
         metrics={
             "mae": metrics["mae"],
+            "mse": metrics["mse"],
             "rmse": metrics["rmse"],
             "bias": metrics["bias"],
             "matched_periods": matched_count,
@@ -96,6 +97,7 @@ def get_summary(month: str = Query("2026-01", description="Month in YYYY-MM form
         missingForecastCount=missing_forecasts,
         missingActualCount=missing_actuals,
         mae=metrics["mae"],
+        mse=metrics["mse"],
         rmse=metrics["rmse"],
         bias=metrics["bias"],
         unit="MW",
@@ -159,6 +161,7 @@ def get_timeseries(
         unit="MW",
         metrics={
             "mae": daily_stats["mae"],
+            "mse": daily_stats["mse"],
             "rmse": daily_stats["rmse"],
             "bias": daily_stats["bias"],
         },
@@ -195,6 +198,7 @@ def get_accuracy(
         DailyAccuracyMetric(
             date=d["date"],
             mae=d["mae"],
+            mse=d["mse"],
             rmse=d["rmse"],
             bias=d["bias"],
             matchedCount=d["matchedCount"],
@@ -207,6 +211,7 @@ def get_accuracy(
         startDate=start,
         endDate=end,
         mae=agg_metrics["mae"],
+        mse=agg_metrics["mse"],
         rmse=agg_metrics["rmse"],
         bias=agg_metrics["bias"],
         matchedCount=agg_metrics["matchedCount"],

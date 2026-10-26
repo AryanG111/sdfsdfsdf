@@ -53,6 +53,12 @@ const CustomAccuracyTooltip: React.FC<any> = ({ active, payload }) => {
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Daily MSE:</span>
+            <span className="num-tabular" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+              {item.mse !== null && item.mse !== undefined ? `${Math.round(item.mse).toLocaleString()} MW²` : '—'}
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-secondary)' }}>Daily RMSE:</span>
             <span className="num-tabular" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
               {item.rmse?.toLocaleString()} MW
@@ -212,6 +218,7 @@ export const MonthlyAccuracyView: React.FC<MonthlyAccuracyViewProps> = ({
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                 <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left' }}>Date</th>
                 <th style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>MAE (MW)</th>
+                <th style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>MSE (MW²)</th>
                 <th style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>RMSE (MW)</th>
                 <th style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>Bias (MW)</th>
                 <th style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>Matched periods</th>
@@ -232,6 +239,9 @@ export const MonthlyAccuracyView: React.FC<MonthlyAccuracyViewProps> = ({
                   </td>
                   <td className="num-tabular" style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
                     {d.mae !== null ? d.mae.toLocaleString() : '—'}
+                  </td>
+                  <td className="num-tabular" style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
+                    {d.mse !== null && d.mse !== undefined ? Math.round(d.mse).toLocaleString() : '—'}
                   </td>
                   <td className="num-tabular" style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
                     {d.rmse !== null ? d.rmse.toLocaleString() : '—'}
