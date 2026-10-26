@@ -1,0 +1,138 @@
+:root {
+  --bg-page: #F7F8FA;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F9FAFB;
+  --bg-input: #FFFFFF;
+  
+  --border-color: #E4E7EC;
+  --border-subtle: #F2F4F7;
+  --border-focus: #2878B5;
+
+  --text-primary: #202938;
+  --text-secondary: #475467;
+  --text-muted: #667085;
+  --text-subtle: #98A2B3;
+
+  --color-actual: #2878B5;       /* Muted analytical blue */
+  --color-forecast: #D98B32;     /* Restrained amber/orange */
+  --color-error-pos: #C94A4A;    /* Overprediction - muted coral */
+  --color-error-neg: #2878B5;    /* Underprediction - muted blue */
+  --color-success: #21805A;      /* Muted green */
+  --color-warning: #B5741E;      /* Muted amber */
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Tabular numerals for analytical precision */
+.num-tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+/* Base button and input styles */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.12s ease-in-out;
+}
+
+select, input {
+  font-family: inherit;
+  color: var(--text-primary);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.12s ease-in-out;
+}
+
+select:focus, input:focus {
+  border-color: var(--border-focus);
+}
+
+/* Clean analytical panel */
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Status text and subtle tags */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.status-tag-neutral {
+  background: #F2F4F7;
+  color: #344054;
+  border: 1px solid #E4E7EC;
+}
+
+.status-tag-selected {
+  background: #FDF4E7;
+  color: #B5741E;
+  border: 1px solid #F5DEB3;
+  font-weight: 600;
+}
+
+.status-tag-eligible {
+  background: #EFF8F3;
+  color: #21805A;
+  border: 1px solid #D1E9DB;
+}
+
+.status-tag-excluded {
+  background: #FDF2F2;
+  color: #C94A4A;
+  border: 1px solid #F8D7D7;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-page);
+}
+::-webkit-scrollbar-thumb {
+  background: #D0D5DD;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #98A2B3;
+}

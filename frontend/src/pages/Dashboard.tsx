@@ -1,0 +1,389 @@
+import React, { useState, useEffect } from 'react';
+import { api } from '../services/api';
+import type {
+  SummaryData,
+  TimeSeriesData,
+  AccuracyData,
+  ForecastHistoryData,
+  DataQualityData,
+} from '../types';
+import { AppHeader } from '../components/AppHeader';
+import { DateSelector } from '../components/DateSelector';
+import { MetricCard } from '../components/MetricCard';
+import { GenerationChart } from '../components/GenerationChart';
+import { DailyMetricsRow } from '../components/DailyMetricsRow';
+import { ErrorChart } from '../components/ErrorChart';
+import { ForecastHistoryTable } from '../components/ForecastHistoryTable';
+import { MonthlyAccuracyView } from '../components/MonthlyAccuracyView';
+import { DataQualityPanel } from '../components/DataQualityPanel';
+import { MethodologyModal } from '../components/MethodologyModal';
+
+type SecondaryTab = 'history' | 'monthly' | 'coverage';
+
+export const Dashboard: React.FC = () => {
+  const [selectedDate, setSelectedDate] = useState<string>('2026-01-01');
+  const [selectedDeliveryTime, setSelectedDeliveryTime] = useState<string>('2026-01-01T12:00:00Z');
+  const [secondaryTab, setSecondaryTab] = useState<SecondaryTab>('history');
+  const [isMethodologyOpen, setIsMethodologyOpen] = useState<boolean>(false);
+
+  // Analytical data states
+  const [summary, setSummary] = useState<SummaryData | null>(null);
+  const [timeSeries, setTimeSeries] = useState<TimeSeriesData | null>(null);
+  const [accuracy, setAccuracy] = useState<AccuracyData | null>(null);
+  const [history, setHistory] = useState<ForecastHistoryData | null>(null);
+  const [quality, setQuality] = useState<DataQualityData | null>(null);
+
+  // Loading & error states
+  const [isLoadingSummary, setIsLoadingSummary] = useState<boolean>(true);
+  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
+  const [isLoadingAccuracy, setIsLoadingAccuracy] = useState<boolean>(false);
+  const [isLoadingQuality, setIsLoadingQuality] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // 1. Initial summary load
+  useEffect(() => {
+    async function fetchSummary() {
+      try {
+        setErrorMessage(null);
+        setIsLoadingSummary(true);
+        const sumData = await api.getSummary('2026-01');
+        setSummary(sumData);
+      } catch (err: any) {
+        console.error('Failed to load summary:', err);
+        setErrorMessage(`Unable to connect to backend: ${err.message}`);
+      } finally {
+        setIsLoadingSummary(false);
+      }
+    }
+    fetchSummary();
+  }, []);
+
+  // 2. Fetch timeseries whenever selectedDate changes
+  useEffect(() => {
+    async function fetchTimeSeries() {
+      try {
+        const tsData = await api.getTimeSeries(selectedDate);
+        setTimeSeries(tsData);
+
+        // Update default history hour to noon of the newly chosen day
+        setSelectedDeliveryTime(`${selectedDate}T12:00:00Z`);
+      } catch (err: any) {
+        console.error('Failed to load timeseries:', err);
+      }
+    }
+    fetchTimeSeries();
+  }, [selectedDate]);
+
+  // 3. Fetch forecast history whenever selectedDeliveryTime changes
+  useEffect(() => {
+    async function fetchHistory() {
+      try {
+        setIsLoadingHistory(true);
+        const histData = await api.getForecastHistory(selectedDeliveryTime);
+        setHistory(histData);
+      } catch (err: any) {
+        console.error('Failed to load history:', err);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    }
+    fetchHistory();
+  }, [selectedDeliveryTime]);
+
+  // 4. Fetch monthly accuracy if secondary tab is 'monthly'
+  useEffect(() => {
+    if (secondaryTab === 'monthly' && !accuracy) {
+      async function fetchAccuracy() {
+        try {
+          setIsLoadingAccuracy(true);
+          const accData = await api.getAccuracy('2026-01-01', '2026-02-01');
+          setAccuracy(accData);
+        } catch (err: any) {
+          console.error('Failed to load accuracy:', err);
+        } finally {
+          setIsLoadingAccuracy(false);
+        }
+      }
+      fetchAccuracy();
+    }
+  }, [secondaryTab, accuracy]);
+
+  // 5. Fetch data quality if secondary tab is 'coverage'
+  useEffect(() => {
+    if (secondaryTab === 'coverage' && !quality) {
+      async function fetchQuality() {
+        try {
+          setIsLoadingQuality(true);
+          const qData = await api.getDataQuality('2026-01');
+          setQuality(qData);
+        } catch (err: any) {
+          console.error('Failed to load quality:', err);
+        } finally {
+          setIsLoadingQuality(false);
+        }
+      }
+      fetchQuality();
+    }
+  }, [secondaryTab, quality]);
+
+  // Available hourly timestamps for the day
+  const availableHours = (timeSeries?.points || [])
+    .filter((pt) => pt.forecastGeneration !== null)
+    .map((pt) => pt.startTime);
+
+  // Compute daily metrics for selected date
+  const dayMatched = (timeSeries?.points || []).filter((p) => p.errorMw !== null);
+  const dayMae = dayMatched.length > 0
+    ? Math.round((dayMatched.reduce((acc, p) => acc + Math.abs(p.errorMw!), 0) / dayMatched.length) * 10) / 10
+    : null;
+  const dayRmse = dayMatched.length > 0
+    ? Math.round(Math.sqrt(dayMatched.reduce((acc, p) => acc + (p.errorMw! ** 2), 0) / dayMatched.length) * 10) / 10
+    : null;
+  const dayBias = dayMatched.length > 0
+    ? Math.round((dayMatched.reduce((acc, p) => acc + p.errorMw!, 0) / dayMatched.length) * 10) / 10
+    : null;
+
+  const handlePeriodSelect = (startTime: string) => {
+    setSelectedDeliveryTime(startTime);
+    setSecondaryTab('history');
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-page)' }}>
+      {/* 1. Header */}
+      <AppHeader onOpenMethodology={() => setIsMethodologyOpen(true)} />
+
+      {/* Main Content Area */}
+      <main
+        style={{
+          maxWidth: '1200px',
+          width: '100%',
+          margin: '0 auto',
+          padding: '2rem 1.5rem',
+          flex: 1,
+        }}
+      >
+        {/* Error notification if backend unavailable */}
+        {errorMessage && (
+          <div
+            style={{
+              padding: '0.875rem 1.25rem',
+              backgroundColor: '#FDF2F2',
+              border: '1px solid #F8D7D7',
+              borderRadius: 'var(--radius-sm)',
+              color: '#C94A4A',
+              fontSize: '0.8125rem',
+              marginBottom: '1.5rem',
+            }}
+          >
+            {errorMessage}
+          </div>
+        )}
+
+        {/* 2. Page Heading */}
+        <section style={{ marginBottom: '0.5rem' }}>
+          <h1
+            style={{
+              fontSize: '1.625rem',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.25,
+            }}
+          >
+            Wind generation
+          </h1>
+          <p
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)',
+              marginTop: '0.25rem',
+            }}
+          >
+            Forecasts compared with actual generation across Great Britain.
+          </p>
+          <p
+            style={{
+              fontSize: '0.75rem',
+              color: 'var(--text-muted)',
+              marginTop: '0.125rem',
+            }}
+          >
+            Evaluation period: 1–31 January 2026
+          </p>
+        </section>
+
+        {/* 3. Date Selection */}
+        <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
+
+        {/* 4. Monthly Accuracy Summary (3 compact cards) */}
+        <section style={{ marginBottom: '1.75rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}
+          >
+            <MetricCard
+              title="Mean absolute error (MAE)"
+              value={summary?.mae ?? null}
+              unit="MW"
+              description="Average absolute difference between forecast and actual generation."
+              isLoading={isLoadingSummary}
+            />
+
+            <MetricCard
+              title="Root mean squared error (RMSE)"
+              value={summary?.rmse ?? null}
+              unit="MW"
+              description="Gives greater weight to larger forecast errors."
+              isLoading={isLoadingSummary}
+            />
+
+            <MetricCard
+              title="Forecast bias"
+              value={
+                summary?.bias !== null && summary?.bias !== undefined
+                  ? `${summary.bias > 0 ? '+' : ''}${summary.bias.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`
+                  : null
+              }
+              unit="MW"
+              description="Positive values indicate overforecasting."
+              isLoading={isLoadingSummary}
+            />
+          </div>
+        </section>
+
+        {/* 5. Main Chart: Forecast vs actual generation */}
+        <section style={{ marginBottom: '1rem' }}>
+          <GenerationChart
+            data={timeSeries?.points || []}
+            selectedDate={selectedDate}
+            onSelectPeriod={handlePeriodSelect}
+          />
+        </section>
+
+        {/* 6. Daily Metrics Summary Row */}
+        <section style={{ marginBottom: '1.5rem' }}>
+          <DailyMetricsRow
+            mae={dayMae}
+            rmse={dayRmse}
+            bias={dayBias}
+            matchedCount={dayMatched.length}
+            totalPeriods={timeSeries?.periodsCount ?? 48}
+          />
+        </section>
+
+        {/* 7. Forecast error over time */}
+        <section style={{ marginBottom: '2.5rem' }}>
+          <ErrorChart data={timeSeries?.points || []} />
+        </section>
+
+        {/* 8. Secondary Information Section */}
+        <section>
+          {/* Subtle segmented tab selector */}
+          <div
+            style={{
+              display: 'flex',
+              borderBottom: '1px solid var(--border-color)',
+              marginBottom: '1.25rem',
+              gap: '0.5rem',
+            }}
+          >
+            <button
+              onClick={() => setSecondaryTab('history')}
+              style={{
+                padding: '0.625rem 0.875rem',
+                fontSize: '0.8125rem',
+                fontWeight: 500,
+                backgroundColor: 'transparent',
+                color: secondaryTab === 'history' ? 'var(--text-primary)' : 'var(--text-muted)',
+                borderBottom: secondaryTab === 'history' ? '2px solid var(--text-primary)' : '2px solid transparent',
+                marginBottom: '-1px',
+              }}
+            >
+              Forecast publication history
+            </button>
+
+            <button
+              onClick={() => setSecondaryTab('monthly')}
+              style={{
+                padding: '0.625rem 0.875rem',
+                fontSize: '0.8125rem',
+                fontWeight: 500,
+                backgroundColor: 'transparent',
+                color: secondaryTab === 'monthly' ? 'var(--text-primary)' : 'var(--text-muted)',
+                borderBottom: secondaryTab === 'monthly' ? '2px solid var(--text-primary)' : '2px solid transparent',
+                marginBottom: '-1px',
+              }}
+            >
+              Monthly accuracy breakdown
+            </button>
+
+            <button
+              onClick={() => setSecondaryTab('coverage')}
+              style={{
+                padding: '0.625rem 0.875rem',
+                fontSize: '0.8125rem',
+                fontWeight: 500,
+                backgroundColor: 'transparent',
+                color: secondaryTab === 'coverage' ? 'var(--text-primary)' : 'var(--text-muted)',
+                borderBottom: secondaryTab === 'coverage' ? '2px solid var(--text-primary)' : '2px solid transparent',
+                marginBottom: '-1px',
+              }}
+            >
+              Data coverage &amp; methodology
+            </button>
+          </div>
+
+          {/* Secondary Tab Content */}
+          {secondaryTab === 'history' && (
+            <ForecastHistoryTable
+              historyData={history}
+              isLoading={isLoadingHistory}
+              selectedDeliveryTime={selectedDeliveryTime}
+              onSelectDeliveryTime={setSelectedDeliveryTime}
+              availableHours={availableHours}
+            />
+          )}
+
+          {secondaryTab === 'monthly' && (
+            <MonthlyAccuracyView
+              accuracyData={accuracy}
+              isLoading={isLoadingAccuracy}
+              onSelectDate={(date) => {
+                setSelectedDate(date);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          )}
+
+          {secondaryTab === 'coverage' && (
+            <DataQualityPanel data={quality} isLoading={isLoadingQuality} />
+          )}
+        </section>
+      </main>
+
+      {/* Clean, quiet footer */}
+      <footer
+        style={{
+          borderTop: '1px solid var(--border-color)',
+          backgroundColor: '#FFFFFF',
+          padding: '1.25rem 1.5rem',
+          textAlign: 'center',
+          fontSize: '0.75rem',
+          color: 'var(--text-muted)',
+        }}
+      >
+        WindLens &bull; National wind generation forecast analysis for Great Britain &bull; Elexon BMRS Open Data
+      </footer>
+
+      {/* Methodology Modal */}
+      <MethodologyModal
+        isOpen={isMethodologyOpen}
+        onClose={() => setIsMethodologyOpen(false)}
+      />
+    </div>
+  );
+};
