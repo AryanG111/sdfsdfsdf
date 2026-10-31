@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Application Gateway — Systems Hub</title>
+  <meta name="description" content="Central portal for analytical platforms, energy market models, and AI workspace services." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #07090E;
+      --bg-secondary: #0D121F;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --bg-card-hover: rgba(26, 36, 56, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow-cyan: rgba(14, 165, 233, 0.35);
+      --border-glow-violet: rgba(139, 92, 246, 0.35);
+      --text-main: #F3F4F6;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --cyan: #0EA5E9;
+      --cyan-light: #38BDF8;
+      --cyan-glow: rgba(14, 165, 233, 0.2);
+      --violet: #8B5CF6;
+      --violet-light: #A78BFA;
+      --violet-glow: rgba(139, 92, 246, 0.2);
+      --emerald: #10B981;
+      --amber: #F59E0B;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Ambient dynamic background lighting */
+    .mesh-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .mesh-glow::before {
+      content: '';
+      position: absolute;
+      top: -15%;
+      left: 10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, transparent 65%);
+      filter: blur(60px);
+      animation: float-1 18s ease-in-out infinite alternate;
+    }
+
+    .mesh-glow::after {
+      content: '';
+      position: absolute;
+      bottom: -10%;
+      right: 15%;
+      width: 650px;
+      height: 650px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 65%);
+      filter: blur(70px);
+      animation: float-2 22s ease-in-out infinite alternate;
+    }
+
+    @keyframes float-1 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(60px, 80px) scale(1.1); }
+    }
+
+    @keyframes float-2 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-70px, -60px) scale(1.08); }
+    }
+
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 3rem;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    /* Top Bar */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(139, 92, 246, 0.2));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cyan-light);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #FFFFFF 40%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-cluster {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      font-size: 0.8125rem;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: #34D399;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      font-size: 0.775rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+      animation: pulse-beacon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-beacon {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .clock-widget {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--cyan);
+      margin-bottom: 0.75rem;
+      background: rgba(14, 165, 233, 0.08);
+      padding: 0.25rem 0.85rem;
+      border-radius: 6px;
+      border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    .hero-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 50%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto;
+      font-weight: 400;
+    }
+
+    /* Auto-redirect Bar */
+    .redirect-bar {
+      margin: 0 auto 3rem;
+      max-width: 600px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .redirect-timer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-main);
+    }
+
+    .progress-track {
+      width: 100px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+      border-radius: 9999px;
+      transform-origin: left;
+      transition: width 1s linear;
+    }
+
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Main Gateway Cards Grid */
+    .gateway-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 2.25rem;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      opacity: 0.8;
+      transition: opacity 0.3s;
+    }
+
+    .card-windlens::before {
+      background: linear-gradient(90deg, var(--cyan), #06B6D4, #3B82F6);
+    }
+
+    .card-noted::before {
+      background: linear-gradient(90deg, var(--violet), #EC4899, #8B5CF6);
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      background: var(--bg-card-hover);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .card-windlens:hover {
+      border-color: var(--border-glow-cyan);
+      box-shadow: 0 20px 45px rgba(14, 165, 233, 0.15);
+    }
+
+    .card-noted:hover {
+      border-color: var(--border-glow-violet);
+      box-shadow: 0 20px 45px rgba(139, 92, 246, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+
+    .icon-container {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .icon-windlens {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.18), rgba(6, 182, 212, 0.08));
+      color: var(--cyan);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+
+    .icon-noted {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(236, 72, 153, 0.08));
+      color: var(--violet);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .badge-route {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      color: #FFFFFF;
+    }
+
+    .card-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+      flex: 1;
+    }
+
+    /* Tag Pills */
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .tag-pill {
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #CBD5E1;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .card-windlens .tag-pill.highlight {
+      background: rgba(14, 165, 233, 0.1);
+      color: var(--cyan-light);
+      border-color: rgba(14, 165, 233, 0.25);
+    }
+
+    .card-noted .tag-pill.highlight {
+      background: rgba(139, 92, 246, 0.1);
+      color: var(--violet-light);
+      border-color: rgba(139, 92, 246, 0.25);
+    }
+
+    /* Action Buttons */
+    .card-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .btn-launch {
+      flex: 1;
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+
+    .btn-windlens {
+      background: linear-gradient(135deg, #0EA5E9, #0284C7);
+      color: #FFFFFF;
+      box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+    }
+
+    .btn-windlens:hover {
+      background: linear-gradient(135deg, #38BDF8, #0EA5E9);
+      box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
+      transform: translateY(-2px);
+    }
+
+    .btn-noted {
+      background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+      color: #FFFFFF;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-noted:hover {
+      background: linear-gradient(135deg, #A78BFA, #8B5CF6);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #FFFFFF;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Microservices Panel */
+    .services-section {
+      background: rgba(17, 24, 39, 0.4);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .services-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .services-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .service-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      text-decoration: none;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+
+    .service-link:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateX(3px);
+    }
+
+    .service-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .service-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .service-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.725rem;
+      color: var(--text-dim);
+    }
+
+    .service-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald);
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: auto;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-dim);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .shortcut-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+      .gateway-grid {
+        grid-template-columns: 1fr;
+      }
+      .redirect-bar {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mesh-glow"></div>
+
+  <div class="page-wrap">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <a href="/" class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">Application Gateway</div>
+        </div>
+      </a>
+
+      <div class="status-cluster">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span>SYSTEMS OPERATIONAL</span>
+        </div>
+        <div class="clock-widget" id="utcClock">UTC --:--:--</div>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-eyebrow">AWS EC2 • EU-North-1 (Stockholm)</div>
+      <h1 class="hero-title">Engineering Systems & Analytics Hub</h1>
+      <p class="hero-subtitle">
+        Central portal for UK energy forecast analytics platforms, personal AI knowledge engines, and operational microservices.
+      </p>
+    </section>
+
+    <!-- Optional Auto-redirect announcement -->
+    <div class="redirect-bar" id="redirectBar">
+      <div class="redirect-timer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>Redirecting to <strong>WindLens</strong> in <span id="countdown">12</span>s</span>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+      <div>
+        <button class="btn-cancel" id="btnCancelRedirect">Stay on Gateway [Esc]</button>
+      </div>
+    </div>
+
+    <!-- Gateway Applications Grid -->
+    <main class="gateway-grid">
+      <!-- Card 1: WindLens -->
+      <article class="card card-windlens" id="cardWindlens">
+        <div class="card-header">
+          <div class="icon-container icon-windlens">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+            </svg>
+          </div>
+          <span class="badge-route">/windlense</span>
+        </div>
+
+        <h2 class="card-title">WindLens</h2>
+        <p class="card-desc">
+          Professional UK wind generation forecast analytics application evaluating January 2026 Elexon BMRS outturns (FUELHH) against multi-version day-ahead forecasts (WINDFOR) with strict T-24h decision cutoff isolation and error quantification.
+        </p>
+
+        <div class="tag-list">
+          <span class="tag-pill highlight">Elexon BMRS API</span>
+          <span class="tag-pill highlight">T - 24h Cutoff</span>
+          <span class="tag-pill">MAE & MSE KPIs</span>
+          <span class="tag-pill">1,488 Periods</span>
+          <span class="tag-pill">18,104 Versions</span>
+          <span class="tag-pill">FastAPI & React</span>
+        </div>
+
+        <div class="card-actions">
+          <a href="/windlense" class="btn-launch btn-windlens" id="linkWindlens">
+            <span>Launch WindLens</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
+          <a href="/windlense/docs" class="btn-secondary" title="OpenAPI / Swagger Documentation">
+            API Docs
+          </a>
+        </div>
+      </article>
+
+      <!-- Card 2: Noted AI -->
+      <article class="card card-noted" id="cardNoted">
+        <div class="card-header">
+          <div class="icon-container icon-noted">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+          </div>
+          <span class="badge-route">/noted</span>
+        </div>
+
+        <h2 class="card-title">Noted AI</h2>
+        <p class="card-desc">
+          Intelligent personal knowledge management & workspace featuring contextual note capturing, knowledge graph visualization, interactive timeline relations, task scheduling, and semantic memory vectors.
+        </p>
+
+        <div class="tag-list">
+          <span class="tag-pill highlight">Knowledge Graph</span>
+          <span class="tag-pill highlight">Timeline & Tasks</span>
+          <span class="tag-pill">Vector Embeddings</span>
+          <span class="tag-pill">ChromaDB</span>
+          <span class="tag-pill">PostgreSQL</span>
+          <span class="tag-pill">FastAPI</span>
+        </div>
+
+        <div class="card-actions">
+          <a href="/noted" class="btn-launch btn-noted" id="linkNoted">
+            <span>Launch Noted AI</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
+          <a href="/noted/api/docs" class="btn-secondary" title="Noted AI API Documentation">
+            API Docs
+          </a>
+        </div>
+      </article>
+    </main>
+
+    <!-- Operational Microservices Hub -->
+    <section class="services-section">
+      <div class="services-header">
+        <div class="services-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+          </svg>
+          <span>Active VPS Services & Endpoints</span>
+        </div>
+        <span class="status-badge" style="background: rgba(255,255,255,0.03); color: var(--text-dim); border-color: var(--border-subtle)">
+          Host: 13.51.157.228
+        </span>
+      </div>
+
+      <div class="services-grid">
+        <a href="/windlense" class="service-link">
+          <div class="service-info">
+            <span class="service-name">WindLens Dashboard</span>
+            <span class="service-path">/windlense/</span>
+          </div>
+          <span class="service-indicator"></span>
+        </a>
+
+        <a href="/noted" class="service-link">
+          <div class="service-info">
+            <span class="service-name">Noted Workspace</span>
+            <span class="service-path">/noted/</span>
+          </div>
+          <span class="service-indicator"></span>
+        </a>
+
+        <a href="/portfolio/" class="service-link">
+          <div class="service-info">
+            <span class="service-name">Portfolio Tracker</span>
+            <span class="service-path">/portfolio/</span>
+          </div>
+          <span class="service-indicator"></span>
+        </a>
+
+        <a href="/polyxbot/" class="service-link">
+          <div class="service-info">
+            <span class="service-name">PolyXBot Trading</span>
+            <span class="service-path">/polyxbot/</span>
+          </div>
+          <span class="service-indicator"></span>
+        </a>
+
+        <a href="/cockpit/" class="service-link">
+          <div class="service-info">
+            <span class="service-name">Server Cockpit</span>
+            <span class="service-path">/cockpit/</span>
+          </div>
+          <span class="service-indicator"></span>
+        </a>
+
+        <a href="/pgadmin/" class="service-link">
+          <div class="service-info">
+            <span class="service-name">pgAdmin Database</span>
+            <span class="service-path">/pgadmin/</span>
+          </div>
+          <span class="service-indicator"></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div>
+        <span>Nginx Reverse Proxy • Let's Encrypt SSL • PM2 Process Manager</span>
+      </div>
+      <div class="footer-links">
+        <span class="shortcut-hint"><kbd>W</kbd> WindLens</span>
+        <span class="shortcut-hint"><kbd>N</kbd> Noted</span>
+        <span class="shortcut-hint"><kbd>Esc</kbd> Cancel Auto-redirect</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Live UTC Clock
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toISOString().substring(11, 19) + ' UTC';
+      const el = document.getElementById('utcClock');
+      if (el) el.textContent = timeStr;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Auto-redirect Countdown
+    let totalSeconds = 12;
+    let remainingSeconds = totalSeconds;
+    let redirectTimer = null;
+    let isCancelled = false;
+
+    const countdownEl = document.getElementById('countdown');
+    const progressFill = document.getElementById('progressFill');
+    const redirectBar = document.getElementById('redirectBar');
+    const btnCancel = document.getElementById('btnCancelRedirect');
+
+    function cancelRedirect() {
+      if (isCancelled) return;
+      isCancelled = true;
+      clearInterval(redirectTimer);
+      if (redirectBar) {
+        redirectBar.style.opacity = '0.5';
+        redirectBar.innerHTML = '<span>Auto-redirect paused. Select an application above.</span>';
+      }
+    }
+
+    if (btnCancel) {
+      btnCancel.addEventListener('click', cancelRedirect);
+    }
+
+    redirectTimer = setInterval(() => {
+      remainingSeconds--;
+      if (countdownEl) countdownEl.textContent = remainingSeconds;
+      if (progressFill) {
+        const pct = (remainingSeconds / totalSeconds) * 100;
+        progressFill.style.width = pct + '%';
+      }
+
+      if (remainingSeconds <= 0) {
+        clearInterval(redirectTimer);
+        window.location.href = '/windlense';
+      }
+    }, 1000);
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const key = e.key.toLowerCase();
+      if (key === 'w') {
+        window.location.href = '/windlense';
+      } else if (key === 'n') {
+        window.location.href = '/noted';
+      } else if (e.key === 'Escape') {
+        cancelRedirect();
+      }
+    });
+  </script>
+</body>
+</html>

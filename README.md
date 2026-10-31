@@ -241,17 +241,19 @@ docker compose up --build
 
 ## 12. Deployment Instructions
 
-### Production VPS Deployment (Live on AWS EC2)
-The application is deployed live on an Ubuntu VPS:
-* **Live Application:** [https://13.51.157.228.sslip.io](https://13.51.157.228.sslip.io)
+### Production VPS Multi-App Deployment (Live on AWS EC2)
+The application is deployed live on an Ubuntu VPS with a central application gateway:
+* **Central Gateway / Portal (Root Domain):** [https://13.51.157.228.sslip.io/](https://13.51.157.228.sslip.io/) (with auto-redirect & service links)
+* **WindLens Analytics Application:** [https://13.51.157.228.sslip.io/windlense](https://13.51.157.228.sslip.io/windlense) (alias: `/windlens`)
+* **Noted AI Workspace:** [https://13.51.157.228.sslip.io/noted](https://13.51.157.228.sslip.io/noted)
 * **Direct IP Fallback:** [http://13.51.157.228](http://13.51.157.228)
-* **Live Swagger Interactive Docs:** [https://13.51.157.228.sslip.io/docs](https://13.51.157.228.sslip.io/docs)
+* **Live Swagger Interactive Docs:** [https://13.51.157.228.sslip.io/windlense/docs](https://13.51.157.228.sslip.io/windlense/docs)
 * **API Health Check:** [https://13.51.157.228.sslip.io/health](https://13.51.157.228.sslip.io/health)
 
 #### VPS Architecture:
 * **Reverse Proxy & SSL:** Nginx with Let's Encrypt TLS termination, HTTP-to-HTTPS redirect, and gzip compression.
-* **Process Manager:** PM2 managing FastAPI Uvicorn ASGI backend service (`windlens-backend`) in a dedicated Python 3.12 virtual environment.
-* **Frontend:** Optimized Vite production bundle served directly by Nginx with client-side SPA routing (`try_files $uri $uri/ /index.html;`) and 1-year immutable caching for `/assets/`.
+* **Process Manager:** PM2 managing `windlens-backend` (port 8000) and `noted-backend` (port 8001) in dedicated virtual environments.
+* **Frontend Routing:** Root `/` serves the application gateway portal. Subpaths `/windlense/` and `/noted/` serve respective SPAs with client-side routing and immutable asset caching.
 
 ### Alternative Cloud Deployments (Vercel & Render)
 * **Frontend (Vercel):** Root directory `frontend`, Framework preset `Vite`, `VITE_API_BASE_URL` pointing to backend.
@@ -261,12 +263,11 @@ The application is deployed live on an Ubuntu VPS:
 
 ## 13. Deliverables & Demonstration
 
-* **Live Frontend Application:** [https://13.51.157.228.sslip.io](https://13.51.157.228.sslip.io)
-* **Live API & Swagger Documentation:** [https://13.51.157.228.sslip.io/docs](https://13.51.157.228.sslip.io/docs)
+* **Live Gateway Hub:** [https://13.51.157.228.sslip.io/](https://13.51.157.228.sslip.io/)
+* **Live WindLens Application:** [https://13.51.157.228.sslip.io/windlense](https://13.51.157.228.sslip.io/windlense)
+* **Live Noted Workspace:** [https://13.51.157.228.sslip.io/noted](https://13.51.157.228.sslip.io/noted)
+* **Live API & Swagger Documentation:** [https://13.51.157.228.sslip.io/windlense/docs](https://13.51.157.228.sslip.io/windlense/docs)
 * **Live Health Check:** [https://13.51.157.228.sslip.io/health](https://13.51.157.228.sslip.io/health)
-* **Demonstration Coverage:**
-  * Part 1: Client business problem, dashboard KPIs, outturn vs forecast, and forecast revision history.
-  * Part 2: Technical architecture, data integrity, test suite, and Docker/VPS deployment.
 
 ---
 
